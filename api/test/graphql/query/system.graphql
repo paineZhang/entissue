@@ -1,0 +1,15 @@
+query GetSystemInfo {
+  systemQuery {
+    system {
+      name
+      createTime
+      updateTime
+      createBy {
+        id
+      }
+      updateBy {
+        id
+      }
+    }
+  }
+}

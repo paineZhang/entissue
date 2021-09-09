@@ -1,0 +1,226 @@
+extend type Query {
+  organizationQuery: OrganizationQuery
+}
+
+extend type Mutation {
+  organizationMutation: OrganizationMutation
+}
+
+type OrganizationQuery {
+  "请求组织"
+  organization: Organization
+
+  orgUnits(filters: OrgUnitWhereInput): [OrgUnit!]
+  orgUnitMembers(filters: OrgUnitMemberWhereInput): [OrgUnitMember]
+  orgUnitPositions(filters: OrgUnitPositionWhereInput): [OrgUnitPosition]
+}
+
+type OrganizationMutation {
+  "创建组织"
+  createOrganization(input: CreateOrganizationInput!): Organization
+  "更新组织"
+  updateOrganization(id: ID!, input: UpdateOrganizationInput!): Boolean!
+
+  "创建组织单元"
+  createOrgUnit(input: CreateOrgUnitInput!): OrgUnit
+  "更新组织单元"
+  updateOrgUnit(id: ID!, input: UpdateOrgUnitInput!): Boolean!
+
+  "创建组织单元成员"
+  createOrgUnitMember(input: CreateOrgUnitMemberInput!): OrgUnitMember
+  "更新组织单元成员"
+  updateOrgUnitMember(id: ID!, input: UpdateOrgUnitMemberInput!): Boolean!
+
+  "创建组织单元职务"
+  createOrgUnitPosition(input: CreateOrgUnitPositionInput!): OrgUnitPosition
+  "更新组织单元职务"
+  updateOrgUnitPosition(id: ID!, input: UpdateOrgUnitPositionInput!): Boolean!
+}
+
+"""
+组织
+"""
+type Organization {
+  id: ID!
+  "名称"
+  name: String!
+
+  "获取所有的组织单元，从其结果中的上级关系描述确定上下层关系。不要嵌套请求，因为graphql的请求机制是请求什么返回什么，不知道层深，所以从客户端角度，请求没办法描述。所以，类似的树结构，会给出所有节点，节点中描述上下层关系"
+  units: [OrgUnit!]
+  staffs: [User!]
+}
+
+input CreateOrganizationInput {
+  name: String
+  units: [ID!]
+}
+
+input UpdateOrganizationInput {
+  name: String
+  addUnitIDs: [ID!]
+  removeUnitIDs: [ID!]
+}
+
+input OrganizationWhereInput {
+  id: ID
+}
+
+"""
+组织单元
+"""
+type OrgUnit {
+  id: ID!
+  "名称"
+  name: String!
+  "职责描述"
+  duty: String
+  "成员"
+  members: [OrgUnitMember!]
+  "属于当前组织单元的职务"
+  positons: [OrgUnitPosition!]
+  "上层单元。如果为空，则是顶级单元，一个组织应该只有一个顶级单元。"
+  supUnit: OrgUnit
+  "下层单元"
+  subUnits: [OrgUnit!]
+}
+
+input CreateOrgUnitInput {
+  belongToOrg: ID
+  name: String!
+  duty: String
+  members: [ID!]
+  positions: [ID!]
+  supUnit: ID
+  subUnits: [ID]
+}
+
+input UpdateOrgUnitInput {
+  name: String!
+  duty: String
+  addMemberIDs: [ID!]
+  removeMemberIDs: [ID!]
+  addPositionIDs: [ID!]
+  removePositionIDs: [ID!]
+  supUnit: ID
+  clearSupUnit: Boolean
+  addSubUnitIDs: [ID!]
+  removeSubUnitIDs: [ID!]
+}
+
+input OrgUnitWhereInput {
+  not: OrgUnitWhereInput
+  or: [OrgUnitWhereInput!]
+  and: [OrgUnitWhereInput!]
+
+  id: ID
+  idIn: [ID!]
+
+  nameContains: String
+
+  hasMembers: Boolean
+  hasMembersWith: [OrgUnitMemberWhereInput!]
+
+  hasPositions: Boolean
+  hasPositionsWith: [OrgUnitPositionWhereInput!]
+
+  hasSupUnit: Boolean
+  hasSupUnitWith: [OrgUnitWhereInput!]
+
+  hasSubUnits: Boolean
+  hasSubUnitsWith: [OrgUnitWhereInput!]
+
+  hasBelongToOrgWith: [OrganizationWhereInput!]
+}
+
+"""
+单元成员
+"""
+type OrgUnitMember {
+  id: ID!
+  "用户"
+  user: User!
+  "职务"
+  position: OrgUnitPosition!
+  "是否是兼职"
+  isAdditional: Boolean!
+}
+
+input CreateOrgUnitMemberInput {
+  isAdditional: Boolean!
+  user: ID!
+  position: ID!
+  belongToOrgUnit: ID!
+}
+
+input UpdateOrgUnitMemberInput {
+  isAdditional: Boolean
+  user: ID
+  position: ID
+}
+
+input OrgUnitMemberWhereInput {
+  not: OrgUnitMemberWhereInput
+  or: [OrgUnitMemberWhereInput!]
+  and: [OrgUnitMemberWhereInput!]
+
+  id: ID
+  idIn: [ID!]
+
+  isAdditional: Boolean
+
+  userID: ID
+  userIDIn: [ID!]
+
+  orgUnitID: ID
+
+  hasUserWith: [UserWhereInput!]
+
+  hasPositionWith: [OrgUnitPositionWhereInput!]
+
+  hasBelongToOrgUnitWith: [OrgUnitWhereInput!]
+}
+
+"""
+职务
+"""
+type OrgUnitPosition {
+  id: ID!
+  "名称"
+  name: String!
+  "职责描述"
+  duty: String
+  "等级。不能为负值。值越小，等级越高。这主要用于职务的权限继承关系、显示排序上等使用。"
+  level: Int!
+}
+
+input CreateOrgUnitPositionInput {
+  name: String!
+  duty: String
+  level: Int
+  belongToOrgUnitMembers: [ID!]
+  belongToOrgUnit: ID
+}
+
+input UpdateOrgUnitPositionInput {
+  name: String
+  duty: String
+  level: Int
+  AddBelongToOrgUnitMemberIDs: [ID!]
+  RemoveBelongToOrgUnitMemberIDs: [ID!]
+  BelongToOrgUnit: ID
+}
+
+input OrgUnitPositionWhereInput {
+  not: OrgUnitPositionWhereInput
+  or: [OrgUnitPositionWhereInput!]
+  and: [OrgUnitPositionWhereInput!]
+
+  id: ID
+  idIn: [ID!]
+
+  NameContains: String
+
+  HasBelongToOrgUnitMembersWith: [OrgUnitMemberWhereInput!]
+
+  HasBelongToOrgUnitWith: [OrgUnitWhereInput!]
+}

@@ -1,0 +1,92 @@
+# DIRECTIVES
+# ----------
+
+directive @goModel(
+  model: String
+  models: [String!]
+) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
+
+directive @goField(
+  forceResolver: Boolean
+  name: String
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+# SCALARS
+# ----------
+
+"游标"
+scalar Cursor
+"时间"
+scalar Time
+"时间"
+scalar Date
+"上传。用于文件。"
+scalar Upload
+"任意类型"
+scalar Any
+"映射"
+scalar Map
+
+# TYPES
+# -----
+
+"""
+请求错误码。
+"""
+enum ErrorCode {
+  "未知错误，通常是没有被具体定义的错误"
+  UNKNOWN
+  "参数错误"
+  PARAMETER_ERROR
+  "服务发生错误，这不是由于客户端调用引起的"
+  SERVER_ERROR
+  "未认证。需要登录"
+  NO_AUTH
+  "密码错误"
+  WRONG_PASSWORD
+  "已经存在"
+  ALREADY_EXIST
+  "不存存在"
+  NOT_EXIST
+  "用户账户不被允许访问系统。通常是非在职状态"
+  ACCOUNT_NOT_ALLOWED
+}
+
+"""
+错误码在返回的错误消息（参考graphql规范中响应信息的错误消息格式）中的扩展信息的关键字
+"""
+enum ErrorCodeKey {
+  ERROR_CODE
+}
+
+"排序方向"
+enum OrderDirection {
+  "升序"
+  ASC
+  "降序"
+  DESC
+}
+
+"页信息"
+type PageInfo {
+  "是否有下一页"
+  hasNextPage: Boolean!
+  "是否有上一页"
+  hasPreviousPage: Boolean!
+  "起始游标"
+  startCursor: Cursor
+  "结束游标"
+  endCursor: Cursor
+}
+
+# ROOT
+# ----
+
+# Query (Read)
+type Query
+
+# Mutations (Create, Update, Delete)
+type Mutation
+
+# Subscriptions (Push, Real-time)
+type Subscription

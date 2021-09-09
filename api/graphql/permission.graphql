@@ -1,0 +1,70 @@
+extend type Query {
+  permissionQuery: PermissionQuery
+}
+
+extend type Mutation {
+  permissionMutation: PermissionMutation
+}
+
+type PermissionQuery {
+  "资源的权限清单"
+  resources(filter: PermissionResourceWhereInput): [Resource!]!
+    @goField(forceResolver: true)
+}
+
+type PermissionMutation {
+  updatePermissionPoliciesForRole(
+    orgPositionId: ID!
+    allPolicies: [UpdatePermissionPolicyInput!]!
+  ): Boolean! @goField(forceResolver: true)
+}
+
+type Resource {
+  id: ID!
+
+  name: String!
+
+  "资源所有action的策略"
+  policies: [PermissionPolicy!]!
+}
+
+# NOTE Resource的数据模型没有policies这个关系，所以这里不能完全
+#      按照代码生成的命名规则，否则关联到ent的模型对象时，字段缺少
+input PermissionResourceWhereInput {
+  HasPermissionPolicyWith: [PermissionPolicyWhereInput!]!
+}
+
+"""
+权限策略
+"""
+type PermissionPolicy {
+  orgPosition: OrgUnitPosition!
+  action: PermissionAction!
+  effect: PermissionEffect!
+}
+
+input UpdatePermissionPolicyInput {
+  resourceId: ID!
+  action: PermissionAction!
+  effect: PermissionEffect!
+}
+
+input PermissionPolicyWhereInput {
+  orgPositionId: ID
+  action: PermissionAction
+  effect: PermissionEffect
+}
+
+# TODO: 后续可能要增加单独的审批权限
+enum PermissionAction {
+  read
+  write
+}
+
+"效果"
+enum PermissionEffect {
+  "允许"
+  allow
+  "阻止"
+  deny
+}

@@ -1,0 +1,24 @@
+extend type Query {
+  systemQuery: SystemQuery
+}
+
+extend type Mutation {
+  systemMutation: SystemMutation
+}
+
+type SystemQuery {
+  "取系统信息"
+  system: System
+}
+
+type SystemMutation {
+  setName(name: String!): Boolean!
+}
+
+type System {
+  name: String!
+  createTime: Time!
+  updateTime: Time
+  createBy: User
+  updateBy: User
+}

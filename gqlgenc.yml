@@ -1,0 +1,24 @@
+schema:
+  - ./api/graphql/*.graphql
+
+client:
+  filename: ./api/test/graphql/gen/client.go
+model:
+  filename: ./api/test/graphql/gen/model.go
+
+models:
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.IntID
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+  Date:
+    model:
+      - github.com/99designs/gqlgen/graphql.Time
+
+query:
+  - ./api/test/graphql/query/*.graphql
+
+generate:
+  clientV2: true

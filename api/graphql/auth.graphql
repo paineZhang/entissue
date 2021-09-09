@@ -1,0 +1,42 @@
+extend type Mutation {
+  authMutation: AuthMutation
+}
+
+type AuthMutation {
+  "登录"
+  login(accountName: String!, password: String!): LoginResponse
+
+  refreshToken: RefreshTokenResponse
+}
+
+"""
+登录返回信息
+"""
+type LoginResponse {
+  "认证token。在其他接口方法中，增加'Authorization'的header项以及带有'Bearer '前缀的值"
+  jwt: String!
+  "返回当前登录的用户信息。"
+  curUser: User!
+}
+
+type RefreshTokenResponse {
+  jwt: String!
+}
+
+"""
+认证信息
+"""
+type Auth {
+  lastAuthTime: Time!
+  authType: AuthType!
+}
+
+"""
+认证类型
+"""
+enum AuthType @goModel(model: "wing/models/ent/auth.AuthType") {
+  "登录"
+  login
+  "刷新"
+  refresh
+}

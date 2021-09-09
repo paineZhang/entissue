@@ -1,0 +1,44 @@
+
+# 增加密码隐私策略
+dn: cn=module{0},cn=config
+changetype: modify
+add: olcModuleLoad
+olcModuleLoad: ppolicy
+
+# 密码使用hash
+dn: olcOverlay=ppolicy,olcDatabase={1}mdb,cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectClass: olcPPolicyConfig
+olcOverlay: ppolicy
+olcPPolicyHashCleartext: TRUE
+
+# 密码hash方式
+dn: olcDatabase={-1}frontend,cn=config
+changetype: modify
+add: olcPasswordHash
+olcPasswordHash: {CRYPT}
+
+# 密码hash格式
+dn: cn=config
+changetype: modify
+add: olcPasswordCryptSaltFormat
+olcPasswordCryptSaltFormat: $5$%.10s
+
+# 默认ou
+dn: ou=people,dc=meixing,dc=com
+changetype: add
+objectClass: top
+objectClass: organizationalUnit
+ou: people
+
+# 用户的访问权限.
+dn: olcDatabase={1}mdb,cn=config
+changetype: modify
+replace: olcAccess
+olcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=extern
+ al,cn=auth manage by * break
+olcAccess: {1}to attrs=userPassword,shadowLastChange by self write by dn="cn
+ =admin,dc=meixing,dc=com" write by anonymous auth by * none
+olcAccess: {2}to * by users read by dn="cn=admin,dc=meixing,dc=com" write by 
+ * none

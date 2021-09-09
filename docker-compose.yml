@@ -1,0 +1,73 @@
+version: "2"
+
+# 注意：当前文件只使用于开发环境
+
+services:
+  # wing-back-end-dev:
+  #   build:
+  #       context: .
+  #       target: wing-backend-dev
+  #   image: golang:1.17.0
+  #   container_name: wing-backend-dev
+  #   environment:
+  #     - WING_ENV=DEVELOP
+  #     - GIN_MODE=debug
+  #     # 数据库的环境变量，在生产版本中，使用从secret file加载，由运维维护
+  #     - DBHOST=wing-postgres-db-dev # 与compose的开发的容器名称一致
+  #     - DBNAME=wing
+  #     - DBUSER=wing
+  #     - DBPASSWORD=wing
+  #   tty: true
+  #   stdin_open: true
+  #   restart: always
+  #   volumes:
+  #     - ./src:/root/src
+  #     - ./dev-container-data-mnt/.vscode-server:/root/.vscode-server
+  #     - ./dev-container-data-mnt/go:/go
+  #   ports:
+  #     - 9101:8080
+  #   depends_on:
+  #     - postgres-db-dev
+  #   command: go env -w GOPROXY=https://goproxy.io,direct
+
+  db:
+    image: docker.mxnavi.com/tsp2/mx-mysql:8
+    container_name: db
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=wing
+      - MYSQL_DATABASE=wing
+      - MYSQL_USER=wing
+      - MYSQL_PASSWORD=wing
+    volumes:
+      - ./dev-container-data-mnt/db/conf:/etc/mysql/conf.d
+      - ./dev-container-data-mnt/db/data:/var/lib/mysql
+    ports:
+      # 调试用，将端口映射到宿主机，主要可以以便用可视化工具来查看等。
+      - 3306:3306
+
+  ldap:
+    image: docker-tsp2.mxnavi.com/library/osixia/openldap:1.5.0
+    container_name: ldap
+    restart: always
+    environment: # 环境变量可以通过环境变量文件。参考：https://github.com/osixia/docker-openldap#link-environment-file
+      - LDAP_ORGANISATION="meixing.com"
+      - LDAP_DOMAIN=meixing.com
+      - LDAP_ADMIN_PASSWORD=wing # 管理员密码可以通过密码文件，参考：https://github.com/osixia/docker-openldap#docker-secrets
+      - LDAP_CONFIG_PASSWORD=wing
+      - LDAP_TLS=false
+    # - LDAP_LOG_LEVEL=-1 # 生产环境，需要设置成0
+    volumes:
+      - ./dev-container-data-mnt/ldap/data:/var/lib/ldap
+      - ./dev-container-data-mnt/ldap/conf:/etc/ldap/slapd.d
+      - ./dev-container-data-mnt/ldap/log:/tmp/log
+      # 挂载密码哈希策略的初始化文件，这其中包括初始化组策略，后续可以将他们拆开。
+      # 这个挂载会使得容器在启动后，执行这些文件。具体参考：https://github.com/osixia/docker-openldap#seed-ldap-database-with-ldif
+      - ./resources/init-conf.ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom/init-conf.ldif
+
+    ports:
+      # 调试用，将端口映射到宿主机，主要可以以便用可视化工具来查看等。
+      - 389:389
+      - 636:636
+    command: "--copy-service"

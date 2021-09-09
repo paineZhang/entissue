@@ -1,0 +1,298 @@
+extend type Query {
+  userQuery: UserQuery
+}
+
+extend type Mutation {
+  userMutation: UserMutation
+}
+
+extend type Subscription {
+  # 订阅没办法用object扩展，不知道为什么。直接写在这里了
+
+  "添加用户"
+  userAdded: UserSubscriptionInfo!
+  "更新用户"
+  userUpdated(filters: UserWhereInput): UserSubscriptionInfo!
+}
+
+"""
+请求接口
+"""
+type UserQuery {
+  "获取用户信息"
+  users(
+    after: Cursor
+    first: Int
+    before: Cursor
+    last: Int
+    filters: UserWhereInput
+    orders: [UserOrder]
+  ): UserConnection
+}
+
+"""
+修改接口。 NOTE 唯一字段的约束错误会已未知错误返回，不单独检查和提示了，太多了，例如邮箱。需要终端根据式样，通过获取方法，进行筛选，检查是否有重复项。
+"""
+type UserMutation {
+  "创建用户"
+  create(input: CreateUserInput!, password: String!): User
+  "更新用户"
+  update(userId: ID!, input: UpdateUserInput!): Boolean!
+
+  "修改当前账户的密码"
+  changePassword(oldPassword: String!, newPassword: String!): Boolean!
+
+  "重置密码。不提供用户id，则意味着重置当前用户密码"
+  resetPassword(accountId: Int): Boolean!
+}
+
+"用户"
+type User {
+  id: ID!
+
+  "通常也用与内网工作邮件的用户名一致。"
+  accountName: String!
+
+  "人员类型：正式、协力（派遣）、实习、外部"
+  staffType: StaffType
+  "在职状态"
+  isOnJob: Boolean!
+  "姓"
+  familyName: String!
+  "名"
+  givenName: String!
+  "显示名称"
+  displayName: String!
+  "出生日期"
+  birthday: Time
+  "身份证号"
+  idNumber: String
+  "性别"
+  sex: Sex
+  "常用联系电话"
+  phoneNumber: String
+  "常用住址"
+  address: String
+  "员工编号"
+  staffId: String
+  "个人常用邮箱"
+  personalEmail: String
+  "内网工作邮箱。与LDAP同步"
+  intranetWorkEmail: String!
+  "外网工作邮箱"
+  extranetWorkEmail: String
+
+  "创建时间"
+  createTime: Time!
+  "更新时间"
+  updateTime: Time!
+
+  "创建者"
+  createBy: User
+  "更新者"
+  updateBy: User
+
+  "认证信息，包括登录和认证刷新"
+  authHistories: [Auth!]
+
+  "工作履历"
+  jobHistories: [JobHistory!]
+
+  "所在组织单元"
+  belongToOrgUnitMembers: [OrgUnitMember!]
+}
+
+"""
+用户创建输入参数
+"""
+input CreateUserInput {
+  "通常也用与内网工作邮件的用户名一致。"
+  accountName: String!
+
+  "人员类型：正式、协力（派遣）、实习、外部"
+  staffType: StaffType!
+
+  "在职状态。创建时，如果在职状态为真，那么认为入职时间与创建时间相同。"
+  isOnJob: Boolean!
+
+  "姓"
+  familyName: String!
+  "名"
+  givenName: String!
+  "显示名称"
+  displayName: String!
+  "出生日期"
+  birthday: Time
+  "身份证号"
+  idNumber: String
+  "性别"
+  sex: Sex
+  "常用联系电话"
+  phoneNumber: String
+  "常用住址"
+  address: String
+  "员工编号"
+  staffId: String
+  "个人常用邮箱"
+  personalEmail: String
+  "内网工作邮箱。与LDAP同步"
+  intranetWorkEmail: String!
+  "外网工作邮箱"
+  extranetWorkEmail: String
+
+  belongToOrgUnitMembers: [ID!]
+  belongToOg: [ID!]
+}
+
+"""
+用户更新输入参数
+"""
+input UpdateUserInput {
+  "通常也用与内网工作邮件的用户名一致。"
+  accountName: String
+
+  "人员类型：正式、协力（派遣）、实习、外部"
+  staffType: StaffType
+
+  "是否在职"
+  isOnJob: Boolean
+
+  "姓"
+  familyName: String
+  "名"
+  givenName: String
+  "显示名称"
+  displayName: String
+  "出生日期"
+  birthday: Time
+  "身份证号"
+  idNumber: String
+  "性别"
+  sex: Sex
+  "常用联系电话"
+  phoneNumber: String
+  "常用住址"
+  address: String
+  "员工编号"
+  staffId: String
+  "个人常用邮箱"
+  personalEmail: String
+  "内网工作邮箱。与LDAP同步"
+  intranetWorkEmail: String
+  "外网工作邮箱"
+  extranetWorkEmail: String
+
+  addBelongToOrgUnitMemberIDs: [ID!]
+  removeBelongToOrgUnitMemberIDs: [ID!]
+  addBelongToOgIDs: [ID!]
+  removeBelongToOgIDs: [ID!]
+}
+
+"""
+性别
+"""
+enum Sex @goModel(model: "wing/models/ent/user.Sex") {
+  male
+  female
+}
+
+"""
+员工类型
+"""
+enum StaffType @goModel(model: "wing/models/ent/user.StaffType") {
+  "正式"
+  regular
+  "派遣/协力"
+  dispatching
+  "实习"
+  intern
+  "外部"
+  external
+}
+
+# ------------------------------
+# 数据的分页、排序、筛选
+#-------------------------------
+
+"""
+分页连接器
+"""
+type UserConnection {
+  "最大数量"
+  totalCount: Int!
+  "当前页信息"
+  pageInfo: PageInfo!
+  "边信息"
+  edges: [UserEdge!]
+}
+
+"""
+边信息
+"""
+type UserEdge {
+  "节点对象"
+  node: User!
+  "当前游标"
+  cursor: Cursor!
+}
+
+"""
+排序字段
+"""
+enum UserOrderField {
+  ACCOUNT_NAME
+  FAMILY_NAME
+  DISPLAY_NAME
+  CREATE_TIME
+}
+
+"""
+排序输入
+"""
+input UserOrder {
+  direction: OrderDirection!
+  field: UserOrderField
+}
+
+# NOTE ent增加了**WhereInput的生成，这位筛选输入条件增加了实现方案。
+"""
+筛选条件。
+"""
+input UserWhereInput {
+  not: UserWhereInput
+  or: [UserWhereInput!]
+  and: [UserWhereInput!]
+
+  id: Int
+  idIn: [Int!]
+  idNotIn: [Int!]
+
+  accountNameContains: String
+
+  staffType: StaffType
+
+  displayNameContains: String
+
+  IDNumberContains: String
+
+  phoneNumberContains: String
+
+  staffIDContains: String
+
+  isOnJob: Boolean
+
+  "是否加入了组织单元。通常用于查询还没有分配进组织单元的员工"
+  hasBelongToOrgUnitMembers: Boolean
+  hasBelongToOrgUnitMembersWith: [OrgUnitMemberWhereInput!]
+
+  "是否加入了组织单元。通常用于查询还没有分配进组织单元的员工"
+  HasBelongToOg: Boolean
+  HasBelongToOgWith: [OrganizationWhereInput!]
+}
+
+"""
+订阅用户消息
+"""
+type UserSubscriptionInfo {
+  id: ID!
+}

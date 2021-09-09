@@ -1,0 +1,6 @@
+.vscode-server
+dev-container-data-mnt
+.vscode
+resolver/generated/generated.go
+resolver/model/models_gen.go
+__debug_bin.exe

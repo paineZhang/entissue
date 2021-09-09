@@ -1,0 +1,102 @@
+extend type Query {
+  jobHistoryQuery: JobHistoryQuery
+}
+
+extend type Mutation {
+  jobHistoryMutation: JobHistoryMutation
+}
+
+type JobHistoryMutation {
+  "设置员工的离职、入职"
+  create(input: CreateJobHistoryInput!): Boolean!
+
+  delete(jobHistoryId: ID!): Boolean!
+}
+
+type JobHistoryQuery {
+  "获取员工的工作履历。如未提供排序条件，则按数据存储模型搜索给出的结果顺序"
+  jobHistories(
+    filters: JobHistoryWhereInput
+    orders: [JobHistoryOrder!]
+  ): JobHistoryConnection
+}
+
+"""
+工作履历。NOTE 后续可能会需要增加就职的企业/团队/工作室的相关信息，以及职务履历、主要工作内容等。
+"""
+type JobHistory {
+  id: ID!
+  "日期"
+  date: Date!
+  "离入职类型"
+  jobEntryLeaveType: JobEntryLeaveType!
+
+  "创建时间"
+  createTime: Time!
+  "创建者"
+  createBy: User!
+}
+
+"""
+离入职类型
+"""
+enum JobEntryLeaveType
+  @goModel(model: "wing/models/ent/jobhistory.JobEntryLeaveType") {
+  "入职"
+  entry
+  "离职"
+  leave
+}
+
+"""
+分页连接器
+"""
+type JobHistoryConnection {
+  "最大数量"
+  totalCount: Int!
+  "当前页信息"
+  pageInfo: PageInfo!
+  "边信息"
+  edges: [JobHistoryEdge!]
+}
+
+"""
+边信息
+"""
+type JobHistoryEdge {
+  "节点对象"
+  node: JobHistory!
+}
+
+"""
+排序输入
+"""
+input JobHistoryOrder {
+  direction: OrderDirection!
+  field: JobHistoryOrderField
+}
+
+"""
+排序字段
+"""
+enum JobHistoryOrderField {
+  DATE
+  CREATE_TIME
+}
+
+"""
+筛选条件。
+"""
+input JobHistoryWhereInput {
+  CreateByUserIn: [ID!]
+  HasBelongToWith: [UserWhereInput!]
+}
+
+"""
+创建工作履历输入信息
+"""
+input CreateJobHistoryInput {
+  belongTo: ID!
+  date: Date!
+  jobEntryLeaveType: JobEntryLeaveType!
+}
